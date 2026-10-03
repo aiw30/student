@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双词典快捷搜索</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 30px 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #f7f8fa;
+            color: #222222;
+        }
+        .container {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* 头部搜索区域卡片 */
+        .search-card {
+            background: #ffffff;
+            padding: 24px 20px 20px;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .header-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d2129;
+            margin-bottom: 16px;
+        }
+        .input-wrap {
+            position: relative;
+            margin-bottom: 14px;
+        }
+        #kwInput {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #1d2129;
+            border: 1.5px solid #e5e6eb;
+            border-radius: 12px;
+            outline: none;
+            background-color: #f7f8fa;
+            transition: all 0.2s ease;
+        }
+        #kwInput:focus {
+            background-color: #ffffff;
+            border-color: #2979ff;
+            box-shadow: 0 0 0 3px rgba(41, 121, 255, 0.12);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #ffffff;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .btn-douyin {
+            background: #fe2c55;
+        }
+        .btn-baidu {
+            background: #2979ff;
+        }
+        .tip-text {
+            font-size: 12px;
+            color: #86909c;
+            text-align: center;
+            margin-top: 12px;
+        }
+        /* 通用栏目卡片 */
+        .section-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1d2129;
+        }
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #86909c;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .clear-btn:hover {
+            color: #fe2c55;
+        }
+        /* 搜索历史标签组 */
+        .history-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag {
+            background: #f2f3f5;
+            color: #4e5969;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            user-select: none;
+        }
+        .tag:hover {
+            background: #e5e6eb;
+            color: #1d2129;
+        }
+        /* 热门搜索网格 */
+        .hot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 16px;
+        }
+        .hot-item {
+            font-size: 15px;
+            color: #272e3b;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hot-item:hover {
+            color: #2979ff;
+        }
+        /* 每日诗句卡片 */
+        .poem-banner {
+            width: 100%;
+            height: 110px;
+            border-radius: 12px;
+            background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.45)), url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
+        }
+        .poem-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .poem-item {
+            border-bottom: 1px dashed #e5e6eb;
+            padding-bottom: 12px;
+        }
+        .poem-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .poem-line {
+            font-size: 15px;
+            color: #1d2129;
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+        .poem-item:hover .poem-line {
+            color: #2979ff;
+        }
+        .poem-author {
+            font-size: 13px;
+            color: #86909c;
+            text-align: right;
+        }
+
+        /* ========= iOS WebKit 点击修复 ========= */
+        .tag, .hot-item, .poem-item, .poem-banner {
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.12);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 主搜索卡片 -->
+        <div class="search-card">
+            <h1 class="header-title">双词典快捷搜索</h1>
+            <div class="input-wrap">
+                <input id="kwInput" type="text" placeholder="输入汉字、词语、成语..." autofocus autocomplete="off">
+            </div>
+            <div class="btn-group">
+                <button class="btn-douyin" onclick="triggerSearch('douyin')">抖音汉语</button>
+                <button class="btn-baidu" onclick="triggerSearch('baidu')">百度汉语</button>
+            </div>
+            <div class="tip-text">按 Enter 回车键默认开启百度汉语搜索</div>
+        </div>
+        <!-- 搜索历史栏目 -->
+        <div class="section-card" id="historySection">
+            <div class="section-header">
+                <span class="section-title">搜索历史</span>
+                <button class="clear-btn" onclick="clearHistory()" title="清空历史">🗑️</button>
+            </div>
+            <div class="history-tags" id="historyContainer">
+                <!-- 历史标签由 JS 动态生成 -->
+            </div>
+        </div>
+        <!-- 热门搜索栏目 -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-title">热门搜索</span>
+            </div>
+            <div class="hot-grid">
+                <div class="hot-item" data-kw="静夜思">静夜思</div>
+                <div class="hot-item" data-kw="庖丁解牛">庖丁解牛</div>
+                <div class="hot-item" data-kw="滕王阁序">滕王阁序</div>
+                <div class="hot-item" data-kw="洛神赋">洛神赋</div>
+                <div class="hot-item" data-kw="急情因循">急情因循</div>
+                <div class="hot-item" data-kw="蜀道难">蜀道难</div>
+                <div class="hot-item" data-kw="龘">龘</div>
+                <div class="hot-item" data-kw="李白的诗">李白的诗</div>
+            </div>
+        </div>
+        <!-- 每日诗句栏目 -->
+        <div class="section-card">
+            <div class="section-header">
+                <span class="section-title">每日诗句</span>
+            </div>
+            <div class="poem-banner">
+                描写桃花的诗
+            </div>
+            <div class="poem-list">
+                <div class="poem-item" data-kw="桃夭">
+                    <div class="poem-line">桃之夭夭，灼灼其华。之子于归，宜其室家...</div>
+                    <div class="poem-author">先秦·佚名《桃夭》</div>
+                </div>
+                <div class="poem-item" data-kw="江畔独步寻花">
+                    <div class="poem-line">黄师塔前江水东，春光懒困倚微风。桃花...</div>
+                    <div class="poem-author">唐·杜甫《江畔独步寻花·其五》</div>
+                </div>
+                <div class="poem-item" data-kw="竹枝词">
+                    <div class="poem-line">山桃红花满上头，蜀江春水拍山流。花红...</div>
+                    <div class="poem-author">唐·刘禹锡《竹枝词·山桃红花满上头》</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 页面加载完成后渲染搜索历史 + 绑定全部点击事件
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHistory();
+            bindAllClick();
+        });
+
+        // 统一搜索逻辑
+        function triggerSearch(engine, word = null) {
+            const input = document.getElementById('kwInput');
+            const kw = word || input.value.trim();
+            if (!kw) return;
+            // 填入输入框
+            input.value = kw;
+            // 保存到搜索历史
+            saveHistory(kw);
+            // 跳转字典
+            let url = '';
+            if (engine === 'douyin') {
+                url = `https://m.shidianhanyu.com/search?keyword=${encodeURIComponent(kw)}&group_id=7140593162174595108&from=baike_wiki&source=chengyu`;
+            } else {
+                url = `https://hanyu.baidu.com/s?wd=${encodeURIComponent(kw)}`;
+            }
+            window.open(url, "_blank");
+        }
+
+        // 快捷点击搜索（默认百度）
+        function quickSearch(word) {
+            triggerSearch('baidu', word);
+        }
+
+        // 保存历史到 localStorage
+        function saveHistory(kw) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            // 去重并排在最前
+            history = history.filter(item => item !== kw);
+            history.unshift(kw);
+            // 最多保留 10 条历史
+            if (history.length > 10) history = history.slice(0, 10);
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        // 渲染历史记录标签（不再输出onclick）
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            const container = document.getElementById('historyContainer');
+            const historySection = document.getElementById('historySection');
+            if (history.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            historySection.style.display = 'block';
+            container.innerHTML = history.map(item =>
+                `<span class="tag" data-kw="${item}">${item}</span>`
+            ).join('');
+        }
+
+        // 清空搜索历史
+        function clearHistory() {
+            localStorage.removeItem('searchHistory');
+            renderHistory();
+            bindHistoryTagClick();
+        }
+
+        // 回车快捷键搜索
+        document.getElementById('kwInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                triggerSearch('baidu');
+            }
+        });
+
+        // ========== JS统一绑定所有点击事件 ==========
+        function bindAllClick(){
+            // banner：描写桃花的诗
+            document.querySelector('.poem-banner').addEventListener('click', ()=>{
+                quickSearch('桃花');
+            });
+
+            // 热门搜索
+            document.querySelectorAll('.hot-item').forEach(el => {
+                el.addEventListener('click', ()=>{
+                    quickSearch(el.dataset.kw);
+                });
+            });
+
+            // 诗句列表
+            document.querySelectorAll('.poem-item').forEach(el => {
+                el.addEventListener('click', ()=>{
+                    quickSearch(el.dataset.kw);
+                });
+            });
+
+            bindHistoryTagClick();
+        }
+
+        // 给搜索历史标签绑定点击
+        function bindHistoryTagClick(){
+            document.querySelectorAll('.history-tags .tag').forEach(el=>{
+                el.addEventListener('click',()=>{
+                    quickSearch(el.dataset.kw);
+                })
+            })
+        }
+    </script>
+</body>
+</html>
