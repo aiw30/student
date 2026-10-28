@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Offset计算器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif;}
+body{
+  background:#f2f3f5;
+  padding-top:30px;
+  padding-bottom:20px;
+  max-width:420px;
+  margin:0 auto;
+  min-height:100vh;
+}
+.wrap{
+  width:100%;
+  background:#fff;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 4px 20px #00000018;
+  display:flex;
+  flex-direction:column;
+}
+
+/* 标签区 增加浅色背景 */
+.tag-area{
+  padding:12px 14px 8px;
+  border-bottom:1px dashed #ddd;
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  background:#f8f9fa;
+}
+.tag-main{
+  flex:1;
+}
+.tag-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-bottom:6px;
+}
+.tag-row.line-last{
+  margin-bottom:0;
+}
+.tag{
+  border:none;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:12px;
+  cursor:pointer;
+  transition:0.15s;
+}
+.tag:active{transform:scale(0.96);}
+.tag:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* 一级标签未选中时，跟二级标签同一套浅色样式 */
+.tag-bm1,
+.tag-bm2{
+  background:#eef3fb;
+  color:#4a90e2;
+}
+.tag-bm1.active,
+.tag-bm2.active{
+  background:#4a90e2;
+  color:#fff;
+}
+
+/* 二级标签 */
+.tag-x{background:#eef3fb;color:#4a90e2;}
+.tag-x.active{background:#4a90e2;color:#fff;}
+.tag-y{background:#f1f3f5;color:#6c757d;}
+.tag-y.active{background:#6c757d;color:#fff;}
+.tag-t{background:#ffeef0;color:#d8646f;}
+.tag-t.active{background:#d8646f;color:#fff;}
+.tag-pcp{background:#fff2e5;color:#f28c28;}
+.tag-pcp.active{background:#f28c28;color:#fff;}
+
+/* 标签栏右侧按钮组 */
+.tag-btn-group{
+  display:flex;
+  gap:6px;
+}
+.btn-divider,
+.btn-history-del{
+  white-space:nowrap;
+  font-size:12px;
+  padding:5px 8px;
+  border-radius:8px;
+  border:none;
+  background:#f0f1f3;
+  color:#666;
+  cursor:pointer;
+}
+.btn-divider:active,
+.btn-history-del:active{background:#e4e5e8;}
+.btn-history-del{
+  color:#c84242;
+}
+
+/* 计算区域：左侧放选中标签，上移一半 */
+.display{
+  padding:14px 20px 12px;
+  text-align:right;
+  min-height:96px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  border-bottom:1px dashed #ddd;
+  background:#fbfbfd;
+}
+.display-tags{
+  flex-shrink:0;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-top:12px;
+}
+.display-col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:72px;
+}
+.exp{
+  font-size:18px;
+  color:#cfd3d8;
+  min-height:24px;
+  margin-bottom:4px;
+  word-break:break-all;
+}
+.result{
+  font-size:36px;
+  font-weight:500;
+  color:#4a90e2;
+  word-break:break-all;
+}
+.display-tag{
+  font-size:12px;
+  padding:3px 8px;
+  border-radius:999px;
+  color:#fff;
+}
+.empty-tag{
+  color:#bbb;
+  font-size:12px;
+}
+
+/* 按键区 卡片风格，字体加粗 */
+.btns{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:14px;
+  background:#fff;
+}
+button{
+  border:none;
+  font-size:22px;
+  font-weight:600;
+  padding:18px 0;
+  background:#f7f8fa;
+  cursor:pointer;
+  transition:0.15s;
+  border-radius:16px;
+}
+button:active{background:#e9ebf0;}
+
+.btn-num{color:#222;}
+.btn-op-gray{color:#f7941d;background:#f7f8fa;}
+.btn-op-gray:active{background:#e9ebf0;}
+.btn-c{color:#f7941d;background:#f7f8fa;}
+.btn-del{color:#f7941d;background:#f7f8fa;}
+.btn-eq{
+  background:#f7941d;
+  color:#fff;
+  grid-row:span 2;
+  border-radius:16px;
+  font-size:24px;
+  font-weight:bold;
+}
+.btn-eq:active{background:#e08315;}
+/* 拆分原来的0按键 */
+.btn-60per{
+  font-size:18px;
+  line-height:1.2;
+}
+.txt-gray{color:#888;}
+.txt-yellow{color:#f7941d;}
+
+/* 历史记录 增加浅色背景 */
+.history{
+  padding:12px 16px;
+  max-height:150px;
+  overflow-y:auto;
+  border-top:1px dashed #ddd;
+  background:#f8f9fa;
+}
+.history-item{
+  padding:6px 0;
+  font-size:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.history-item.divider-line{
+  padding:4px 0;
+}
+.history-item.divider-line > div{
+  height:1px;
+  background:#d0d2d6;
+  width:100%;
+}
+.history-item .tags{
+  display:flex;
+  gap:4px;
+  flex-shrink:0;
+}
+.history-item .formula{
+  color:#999;
+  flex:1;
+  text-align:right;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.history-item .result{
+  color:#4a90e2;
+  font-weight:600;
+  font-size:15px;
+  flex-shrink:0;
+}
+.history-tag{
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:999px;
+  color:#fff;
+}
+.history-bm1{background:#4a90e2;}
+.history-bm2{background:#5b7cfa;}
+.history-x{background:#4a90e2;}
+.history-y{background:#6c757d;}
+.history-t{background:#d8646f;}
+.history-pcp{background:#f28c28;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 标签区 -->
+  <div class="tag-area">
+    <div class="tag-main">
+      <div class="tag-row">
+        <button class="tag tag-bm1" data-tag="BM1" data-level="1">BM1</button>
+        <button class="tag tag-bm2" data-tag="BM2" data-level="1">BM2</button>
+      </div>
+      <div class="tag-row">
+        <button class="tag tag-x" data-tag="Shot1 X" data-level="2" disabled>Shot1 X</button>
+        <button class="tag tag-x" data-tag="Shot2 X" data-level="2" disabled>Shot2 X</button>
+        <button class="tag tag-y" data-tag="Shot1 Y" data-level="2" disabled>Shot1 Y</button>
+        <button class="tag tag-y" data-tag="Shot2 Y" data-level="2" disabled>Shot2 Y</button>
+      </div>
+      <div class="tag-row line-last">
+        <button class="tag tag-t" data-tag="Shot1 θ" data-level="2" disabled>Shot1 θ</button>
+        <button class="tag tag-t" data-tag="Shot2 θ" data-level="2" disabled>Shot2 θ</button>
+        <button class="tag tag-pcp" data-tag="PCP" data-level="2" disabled>PCP</button>
+      </div>
+    </div>
+    <div class="tag-btn-group">
+      <button class="btn-history-del" onclick="delLatestHistory()">删除</button>
+      <button class="btn-divider" onclick="addHistoryDivider()">分割线</button>
+    </div>
+  </div>
+
+  <!-- 计算显示区 -->
+  <div class="display">
+    <div class="display-tags" id="displayTags">
+      <span class="empty-tag">未选择标签</span>
+    </div>
+    <div class="display-col">
+      <div class="exp" id="exp"></div>
+      <div class="result" id="res">0</div>
+    </div>
+  </div>
+
+  <!-- 按键区 -->
+  <div class="btns">
+    <button class="btn-c" onclick="clearAll()">C</button>
+    <button class="btn-op-gray" onclick="input('/')">÷</button>
+    <button class="btn-op-gray" onclick="input('*')">×</button>
+    <button class="btn-del" onclick="del()">⌫</button>
+
+    <button class="btn-num" onclick="input('7')">7</button>
+    <button class="btn-num" onclick="input('8')">8</button>
+    <button class="btn-num" onclick="input('9')">9</button>
+    <button class="btn-op-gray" onclick="input('-')">−</button>
+
+    <button class="btn-num" onclick="input('4')">4</button>
+    <button class="btn-num" onclick="input('5')">5</button>
+    <button class="btn-num" onclick="input('6')">6</button>
+    <button class="btn-op-gray" onclick="input('+')">+</button>
+
+    <button class="btn-num" onclick="input('1')">1</button>
+    <button class="btn-num" onclick="input('2')">2</button>
+    <button class="btn-num" onclick="input('3')">3</button>
+    <button class="btn-op-gray" onclick="input('%')">%</button>
+
+    <button class="btn-60per" onclick="calc60()">
+      <span class="txt-gray">×</span><span class="txt-yellow">60%</span>
+    </button>
+    <button class="btn-num" onclick="input('0')">0</button>
+    <button class="btn-num" onclick="input('.')">.</button>
+    <button class="btn-eq" onclick="calc()">=</button>
+  </div>
+
+  <!-- 历史记录 -->
+  <div class="history" id="historyBox"></div>
+</div>
+
+<script>
+let expr = '';
+let level1Tag = null;
+let level2Tag = null;
+const MAX_HISTORY = 30;
+
+const expEl = document.getElementById('exp');
+const resEl = document.getElementById('res');
+const historyBox = document.getElementById('historyBox');
+const displayTagsEl = document.getElementById('displayTags');
+const allTags = document.querySelectorAll('.tag');
+
+// 读取本地存储历史
+let historyList = JSON.parse(localStorage.getItem('offsetCalcHistory')) || [];
+
+allTags.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tag = btn.dataset.tag;
+    const level = btn.dataset.level;
+
+    if(level === '1'){
+      if(level1Tag === tag){
+        level1Tag = null;
+        level2Tag = null;
+        disableLevel2();
+      }else{
+        level1Tag = tag;
+        enableLevel2();
+      }
+      updateTagDisplay();
+      clearExpr();
+    }
+
+    if(level === '2'){
+      if(!level1Tag){
+        flashMessage('请先选择 BM1 或 BM2');
+        return;
+      }
+      if(level2Tag === tag){
+        level2Tag = null;
+      }else{
+        level2Tag = tag;
+      }
+      updateTagDisplay();
+      clearExpr();
+    }
+  });
+});
+
+function enableLevel2(){
+  document.querySelectorAll('.tag[data-level="2"]').forEach(b=>b.disabled=false);
+}
+function disableLevel2(){
+  document.querySelectorAll('.tag[data-level="2"]').forEach(b=>{
+    b.disabled = true;
+    b.classList.remove('active');
+  });
+}
+
+function updateTagDisplay(){
+  allTags.forEach(b=>b.classList.remove('active'));
+  if(level1Tag){
+    document.querySelector(`.tag[data-tag="${level1Tag}"]`).classList.add('active');
+  }
+  if(level2Tag){
+    document.querySelector(`.tag[data-tag="${level2Tag}"]`).classList.add('active');
+  }
+
+  if(!level1Tag && !level2Tag){
+    displayTagsEl.innerHTML = `<span class="empty-tag">未选择标签</span>`;
+    return;
+  }
+  let html = '';
+  if(level1Tag){
+    html += `<span class="display-tag" style="background:${level1Tag==='BM1'?'#4a90e2':'#5b7cfa'}">${level1Tag}</span>`;
+  }
+  if(level2Tag){
+    html += `<span class="display-tag" style="background:${getLevel2Color(level2Tag)}">${level2Tag}</span>`;
+  }
+  displayTagsEl.innerHTML = html;
+}
+
+function getLevel2Color(tag){
+  if(tag.includes('Y')) return '#6c757d';
+  if(tag.includes('θ')) return '#d8646f';
+  if(tag === 'PCP') return '#f28c28';
+  return '#4a90e2';
+}
+
+function flashMessage(msg){
+  const old = displayTagsEl.innerHTML;
+  displayTagsEl.innerHTML = `<span style="color:#f59a23;font-size:12px;">${msg}</span>`;
+  setTimeout(()=>updateTagDisplay(), 900);
+}
+
+function clearExpr(){
+  expr = '';
+  expEl.innerText = '';
+  resEl.innerText = '0';
+}
+
+function showText(s){
+  return s.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+}
+
+function input(char){
+  if(expr === 'Error') expr = '';
+  expr += char;
+  expEl.innerText = showText(expr);
+
+  try{
+    let tmp = parsePercent(expr);
+    let v = eval(tmp);
+    resEl.innerText = formatNum(v);
+  }catch{
+    if(/^-?\d+\.?\d*$/.test(expr)){
+      resEl.innerText = expr;
+    }
+  }
+}
+
+// 删除最新一条历史
+function delLatestHistory(){
+  if(historyList.length === 0) return;
+  historyList.shift();
+  saveHistory();
+  renderHistory();
+}
+
+// 添加历史分割线
+function addHistoryDivider(){
+  historyList.unshift({isDivider:true});
+  trimHistory();
+  saveHistory();
+  renderHistory();
+}
+
+// 60%按钮逻辑：当前输入数字 * 0.6
+function calc60(){
+  if(expr === '' || expr === 'Error') return;
+  try{
+    let tmp = parsePercent(expr);
+    let val = eval(tmp);
+    let result = val * 0.6;
+    // 存入历史
+    const item = {
+      l1: level1Tag,
+      l2: level2Tag,
+      formula: showText(expr)+" ×60%",
+      result: formatNum(result)
+    };
+    historyList.unshift(item);
+    trimHistory();
+    saveHistory();
+    renderHistory();
+    expr = String(result);
+    expEl.innerText = showText(expr);
+    resEl.innerText = formatNum(result);
+  }catch(e){
+    resEl.innerText = 'Error';
+    expr = 'Error';
+  }
+}
+
+function parsePercent(s){
+  return s.replace(/(\d+\.?\d*)([+\-])(\d+\.?\d*)%/g, (m,a,op,b)=>{
+    return `${a}${op}${a}*${b}/100`;
+  }).replace(/(\d+\.?\d*)%/g, '($1/100)');
+}
+
+function calc(){
+  try{
+    const tmp = parsePercent(expr);
+    const val = eval(tmp);
+    const item = {
+      l1: level1Tag,
+      l2: level2Tag,
+      formula: showText(expr),
+      result: formatNum(val)
+    };
+    historyList.unshift(item);
+    trimHistory();
+    saveHistory();
+    renderHistory();
+    expEl.innerText = showText(expr);
+    resEl.innerText = formatNum(val);
+    expr = String(val);
+  }catch(e){
+    resEl.innerText = 'Error';
+    expr = 'Error';
+  }
+}
+
+function trimHistory(){
+  // 超过最大条数，删掉最早（数组尾部）的记录
+  if(historyList.length > MAX_HISTORY){
+    historyList = historyList.slice(0, MAX_HISTORY);
+  }
+}
+function saveHistory(){
+  localStorage.setItem('offsetCalcHistory', JSON.stringify(historyList));
+}
+
+function clearAll(){
+  clearExpr();
+}
+
+function del(){
+  if(expr === 'Error'){clearAll();return;}
+  expr = expr.slice(0,-1);
+  expEl.innerText = showText(expr);
+  if(expr === '') resEl.innerText='0';
+}
+
+function formatNum(n){
+  if(!isFinite(n)) return 'Error';
+  let s = Number(n).toPrecision(12);
+  s = parseFloat(s).toString();
+  return s;
+}
+
+function renderHistory(){
+  historyBox.innerHTML = historyList.map(i=>{
+    if(i.isDivider){
+      return `<div class="history-item divider-line"><div></div></div>`;
+    }
+    let tagsHtml = '';
+    if(i.l1) tagsHtml += `<span class="history-tag history-${i.l1.toLowerCase()}">${i.l1}</span>`;
+    let cls = 'history-x';
+    if(i.l2){
+      if(i.l2.includes('Y')) cls='history-y';
+      if(i.l2.includes('θ')) cls='history-t';
+      if(i.l2 === 'PCP') cls='history-pcp';
+      tagsHtml += `<span class="history-tag ${cls}">${i.l2}</span>`;
+    }
+    return `<div class="history-item">
+      <div class="tags">${tagsHtml}</div>
+      <div class="formula">${i.formula}</div>
+      <div class="result">${i.result}</div>
+    </div>`;
+  }).join('');
+}
+
+updateTagDisplay();
+renderHistory();
+</script>
+</body>
+</html>
